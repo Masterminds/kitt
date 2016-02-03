@@ -31,5 +31,6 @@ func main() {
 	time.Sleep(7 * time.Second)
 	pi.Message("Bye")
 	time.Sleep(4 * time.Second)
-	pi.Done()
+	pi.Done("Done")
+	time.Sleep(40 * time.Millisecond)
 }

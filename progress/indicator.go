@@ -3,6 +3,7 @@ package progress
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 )
@@ -13,13 +14,25 @@ type Indicator struct {
 	Writer   io.Writer
 
 	initialMessage string
-	done           chan bool
+	done           chan string
 	msg            chan string
 }
 
+func NewIndicator() *Indicator {
+	return &Indicator{
+		Interval: time.Second,
+		Writer:   os.Stdout,
+		Frames: []string{
+			".  ",
+			".. ",
+			"...",
+		},
+	}
+}
+
 func (i *Indicator) Start(message string) {
-	i.done = make(chan bool)
-	i.msg = make(chan string, 1)
+	i.done = make(chan string)
+	i.msg = make(chan string, 100)
 	go i.run()
 	i.msg <- message
 }
@@ -28,8 +41,8 @@ func (i *Indicator) Message(message string) {
 	i.msg <- message
 }
 
-func (i *Indicator) Done() {
-	i.done <- true
+func (i *Indicator) Done(message string) {
+	i.done <- message
 }
 
 func (i *Indicator) run() {
@@ -54,10 +67,14 @@ func (i *Indicator) run() {
 			if fr >= len(i.Frames) {
 				fr = 0
 			}
-		case <-i.done:
+		case mm := <-i.done:
+			if pad := maxlen + len(i.Frames[fr]) + 2 - len(mm); pad > 0 {
+				mm += strings.Repeat(" ", pad)
+			}
+			fmt.Println(mm)
 			tt.Stop()
-			close(i.done)
 			close(i.msg)
+			i.done = nil
 		}
 	}
 }
