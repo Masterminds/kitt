@@ -74,7 +74,8 @@ func (i *Indicator) run() {
 			fmt.Println(mm)
 			tt.Stop()
 			close(i.msg)
-			i.done = nil
+			close(i.done)
+			return
 		}
 	}
 }
